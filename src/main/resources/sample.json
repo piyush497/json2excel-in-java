@@ -1,0 +1,75 @@
+{
+  "company": "Tech Corp",
+  "employees": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "age": 30,
+      "email": "john.doe@techcorp.com",
+      "address": {
+        "street": "123 Main St",
+        "city": "New York",
+        "state": "NY",
+        "zipCode": "10001"
+      },
+      "skills": ["Java", "Spring Boot", "Microservices"],
+      "projects": [
+        {
+          "name": "Project Alpha",
+          "status": "completed",
+          "duration": 6
+        },
+        {
+          "name": "Project Beta",
+          "status": "in-progress",
+          "duration": 3
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "age": 28,
+      "email": "jane.smith@techcorp.com",
+      "address": {
+        "street": "456 Oak Ave",
+        "city": "San Francisco",
+        "state": "CA",
+        "zipCode": "94102"
+      },
+      "skills": ["Python", "Django", "Data Science"],
+      "projects": [
+        {
+          "name": "Project Gamma",
+          "status": "in-progress",
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Bob Johnson",
+      "age": 35,
+      "email": "bob.johnson@techcorp.com",
+      "address": {
+        "street": "789 Pine Rd",
+        "city": "Seattle",
+        "state": "WA",
+        "zipCode": "98101"
+      },
+      "skills": ["JavaScript", "React", "Node.js"],
+      "projects": []
+    }
+  ],
+  "departments": [
+    {
+      "name": "Engineering",
+      "headCount": 50
+    },
+    {
+      "name": "Sales",
+      "headCount": 20
+    }
+  ]
+}
+
