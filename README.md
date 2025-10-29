@@ -111,3 +111,56 @@ The Excel output will have columns like:
 
 This project is provided as-is for educational and development purposes.
 
+## Docker
+
+Build image:
+
+```bash
+docker build -t json2excel:latest .
+```
+
+Run with mounted data directory (Windows PowerShell example):
+
+```powershell
+docker run --rm -v ${PWD}/data:/data json2excel:latest /data/input.json /data/output.xlsx
+```
+
+Notes:
+- The container's entrypoint is `java -jar /app/json-to-excel.jar`, so you only pass the two file paths as args.
+- Ensure `data` exists and contains `input.json`.
+
+## Kubernetes
+
+This app is best run as a Job (batch) that reads a JSON file and writes an Excel file.
+
+1) Build and load the image to a registry or your cluster:
+
+```bash
+# Option A: Kind/minikube local load (example: minikube)
+minikube image build -t json2excel:latest .
+
+# Option B: Push to a registry
+docker build -t <registry>/json2excel:latest .
+docker push <registry>/json2excel:latest
+# then update k8s/job.yaml image field
+```
+
+2) Apply manifests:
+
+```bash
+kubectl apply -f k8s/job.yaml
+```
+
+3) Get logs and retrieve the output:
+
+```bash
+kubectl logs job/json2excel-job
+kubectl get pods -l job-name=json2excel-job
+POD=$(kubectl get pods -l job-name=json2excel-job -o jsonpath='{.items[0].metadata.name}')
+kubectl cp $POD:/data/output.xlsx ./output.xlsx
+```
+
+Customize:
+- Edit `k8s/job.yaml` ConfigMap to change `input.json`.
+- Replace the `emptyDir` volume with a `PersistentVolumeClaim` if you want the output to persist independent of the pod lifecycle.
+

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: json2excel-input
+data:
+  input.json: |
+    # Replace this with your JSON. This default mirrors src/main/resources/sample.json if desired.
+    {
+      "users": [
+        {"id": 1, "name": "Alice", "roles": ["admin", "editor"]},
+        {"id": 2, "name": "Bob",   "roles": ["viewer"]}
+      ]
+    }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: json2excel-job
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: json2excel
+          image: json2excel:latest
+          imagePullPolicy: IfNotPresent
+          # ENTRYPOINT is "java -jar /app/json-to-excel.jar"
+          args: ["/data/input.json", "/data/output.xlsx"]
+          volumeMounts:
+            - name: input
+              mountPath: /data/input.json
+              subPath: input.json
+            - name: output
+              mountPath: /data
+      volumes:
+        - name: input
+          configMap:
+            name: json2excel-input
+            items:
+              - key: input.json
+                path: input.json
+        - name: output
+          emptyDir: {}
+
