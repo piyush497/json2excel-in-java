@@ -1,0 +1,85 @@
+name: PullImageFromDockerHubAndRunInKubernetes
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'Docker Hub repository (e.g., username/json2excel)'
+        required: true
+        type: string
+      tag:
+        description: 'Image tag to deploy (e.g., latest)'
+        required: false
+        default: 'latest'
+        type: string
+      namespace:
+        description: 'Kubernetes namespace'
+        required: false
+        default: 'default'
+        type: string
+      waitForCompletion:
+        description: 'Wait for Job completion and upload output.xlsx'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  deploy_job:
+    name: Deploy Job with Docker Hub Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      NAMESPACE: ${{ inputs.namespace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${KUBE_CONFIG}" > $HOME/.kube/config
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Ensure namespace exists
+        run: |
+          kubectl get ns "${NAMESPACE}" >/dev/null 2>&1 || kubectl create ns "${NAMESPACE}"
+
+      - name: Delete previous job if exists
+        run: kubectl -n "${NAMESPACE}" delete job json2excel-job --ignore-not-found
+
+      - name: Apply manifests with Docker Hub image
+        env:
+          IMAGE: ${{ inputs.repository }}:${{ inputs.tag }}
+        run: |
+          sed "s|image: json2excel:latest|image: ${IMAGE}|" k8s/job.yaml | kubectl -n "${NAMESPACE}" apply -f -
+
+      - name: Wait for Job completion
+        if: inputs.waitForCompletion == 'true'
+        run: kubectl -n "${NAMESPACE}" wait --for=condition=complete job/json2excel-job --timeout=600s
+
+      - name: Get logs
+        if: inputs.waitForCompletion == 'true'
+        run: kubectl -n "${NAMESPACE}" logs job/json2excel-job --tail=-1
+
+      - name: Copy output.xlsx from pod
+        if: inputs.waitForCompletion == 'true'
+        run: |
+          POD=$(kubectl -n "${NAMESPACE}" get pods -l job-name=json2excel-job -o jsonpath='{.items[0].metadata.name}')
+          kubectl -n "${NAMESPACE}" cp "$POD:/data/output.xlsx" ./output.xlsx || echo "No output.xlsx found"
+
+      - name: Upload output.xlsx artifact
+        if: inputs.waitForCompletion == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k8s-output
+          path: output.xlsx
+          if-no-files-found: warn
+
+

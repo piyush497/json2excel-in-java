@@ -1,0 +1,26 @@
+# Maven
+target/
+**/target/
+.settings/
+.project
+.classpath
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Node (if ever present)
+node_modules/
+
+# Local outputs
+output.xlsx
+
