@@ -1,0 +1,78 @@
+# Name of the workflow as it appears in the GitHub Actions UI
+name: Build and Push Docker Image
+
+# Triggers the workflow
+on:
+  
+  workflow_dispatch: # Allows manual triggering of the workflow from the GitHub UI
+    # You can define inputs here if you want to pass parameters when manually triggering
+    # For example:
+    # inputs:
+    #   image_tag:
+    #     description: 'Docker image tag (e.g., v1.0.0)'
+    #     required: false
+    #     default: 'latest'
+
+# Define the jobs to be executed
+jobs:
+  build_and_push:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Step 1: Checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it.
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+    # Step 2: Set up Java Development Kit (JDK)
+      # This step is crucial for building your Spring Boot application.
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # Specify the Java version matching your pom.xml
+          distribution: 'temurin' # Recommended distribution
+          cache: 'maven' # Caches Maven dependencies for faster builds
+
+      # Step 3: Build the Spring Boot application using Maven
+      # This command will compile the code and package it into a JAR file
+      # (typically in the 'target/' directory).
+      - name: Build Spring Boot Application
+        run: mvn clean package -DskipTests # -DskipTests to skip tests for faster build, remove if tests are mandatory
+      # Step 4: Diagnose: List files in the current directory and target/
+      # This step will help confirm if the 'target' directory and JAR are present after the Maven build.
+      - name: List files for debugging
+        run: |
+          echo "Listing files in current directory:"
+          ls -F
+          echo "Listing files in target/ directory:"
+          ls -F target/ || echo "target/ directory not found or empty."
+      # Step 4: Logs into Docker Hub (or any other Docker registry).
+      # It uses secrets for username and password for security.
+      # You need to set these secrets in your GitHub repository settings:
+      # DOCKER_USERNAME: Your Docker Hub username
+      # DOCKER_PASSWORD: Your Docker Hub access token or password
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 5: Sets up Docker Buildx. Buildx is a Docker CLI plugin for extended build capabilities,
+      # including multi-platform builds and caching.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 6: Builds and pushes the Docker image.
+      # It uses the current directory as the build context.
+      # It pushes the image to Docker Hub with two tags: 'latest' and a tag based on the commit SHA.
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: . # The build context (directory containing Dockerfile)
+          push: true # Whether to push the image to the registry
+          # Replace 'your-dockerhub-username/your-app-name' with your actual image name
+          tags: |            
+            piyush497/json2excel:latest            
+          cache-from: type=gha # Use GitHub Actions cache for faster builds
+          cache-to: type=gha,mode=max # Cache layers for subsequent builds
