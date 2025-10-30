@@ -37,7 +37,7 @@ jobs:
       # Step 3: Build the Spring Boot application using Maven
       # This command will compile the code and package it into a JAR file
       # (typically in the 'target/' directory).
-      - name: Build Spring Boot Application
+      - name: Build Java Application
         run: mvn clean package -DskipTests # -DskipTests to skip tests for faster build, remove if tests are mandatory
       # Step 4: Diagnose: List files in the current directory and target/
       # This step will help confirm if the 'target' directory and JAR are present after the Maven build.
@@ -55,8 +55,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Step 5: Sets up Docker Buildx. Buildx is a Docker CLI plugin for extended build capabilities,
       # including multi-platform builds and caching.
