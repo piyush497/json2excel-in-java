@@ -18,10 +18,8 @@ FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-# Copy the built jar; rename to a stable name inside image
-COPY --from=build /workspace/target/*-with-dependencies.jar /app/json-to-excel.jar 2>/dev/null || \
-  COPY --from=build /workspace/target/*-shaded.jar /app/json-to-excel.jar 2>/dev/null || \
-  COPY --from=build /workspace/target/*.jar /app/json-to-excel.jar
+# Copy the built shaded jar with a deterministic name
+COPY --from=build /workspace/target/json-to-excel-1.0.0.jar /app/json-to-excel.jar
 
 # Default data directory
 VOLUME ["/data"]
