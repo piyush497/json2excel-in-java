@@ -44,6 +44,8 @@ jobs:
     needs: build_test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,8 +95,6 @@ jobs:
     needs: docker_build_push
     if: github.event_name == 'push' && success() && secrets.KUBE_CONFIG != ''
     runs-on: ubuntu-latest
-    env:
-      IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -119,8 +119,9 @@ jobs:
         run: kubectl delete job json2excel-job --ignore-not-found
 
       - name: Apply manifests with image override
+        env:
+          IMAGE: ${{ needs.docker_build_push.outputs.image }}
         run: |
-          IMAGE="${IMAGE}" \
           bash -c 'sed "s|image: json2excel:latest|image: ${IMAGE}|" k8s/job.yaml | kubectl apply -f -'
 
       - name: Wait for Job completion
